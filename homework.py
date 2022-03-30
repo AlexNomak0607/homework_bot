@@ -4,6 +4,7 @@ import requests
 import time
 import logging
 from dotenv import load_dotenv
+from http import HTTPStatus
 
 import exceptions
 
@@ -41,6 +42,9 @@ def send_message(bot, message):
         logger.info('Сообщение отправлено')
     except exceptions.SendingErrorException:
         logger.error('Сбой при запросе cообщения')
+    except telegram.TelegramError as error:
+        logger.error(
+            f'Ошибка при отправке сообщения: {error}')
 
 
 def get_api_answer(current_timestamp):
@@ -53,7 +57,7 @@ def get_api_answer(current_timestamp):
             headers=HEADERS,
             params=params
         )
-        if response.status_code != requests.codes.ok:
+        if response.status_code != HTTPStatus.OK:
             message = 'Сервер возвращает код, отличный от 200'
             logging.error(message)
             raise
@@ -124,10 +128,10 @@ def main():
                 message = parse_status(homework[0])
                 send_message(bot, message)
             current_timestamp = response.get('current_date')
-            time.sleep(RETRY_TIME)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             send_message(bot, message)
+        finally:
             time.sleep(RETRY_TIME)
 
 
